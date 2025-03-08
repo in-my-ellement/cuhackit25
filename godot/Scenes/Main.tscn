@@ -1,11 +1,23 @@
-[gd_scene load_steps=10 format=3 uid="uid://d3n8jea5li6dj"]
+[gd_scene load_steps=12 format=3 uid="uid://d3n8jea5li6dj"]
 
 [ext_resource type="Script" uid="uid://c6jiq1bt8dlfy" path="res://Scenes/Main.gd" id="1_idj7w"]
-[ext_resource type="Texture2D" uid="uid://cei8e06xio31y" path="res://Assets/watercolor2.jpg" id="2_kln2b"]
 [ext_resource type="Texture2D" uid="uid://dfcvi882per2v" path="res://Assets/mountains.png" id="3_kln2b"]
 [ext_resource type="Script" uid="uid://bko4jmk81oqrq" path="res://Scenes/Canvas.gd" id="3_rgh2o"]
 [ext_resource type="Texture2D" uid="uid://roaq4yfxjqqm" path="res://Assets/mountains6.png" id="5_jw32o"]
 [ext_resource type="Texture2D" uid="uid://b87k72furga4v" path="res://Assets/mountains2_alt.png" id="6_v1gob"]
+
+[sub_resource type="Gradient" id="Gradient_pbw6q"]
+colors = PackedColorArray(0.89, 0.860185, 0.2937, 1, 0.91, 0.42952, 0.1092, 1)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_v1gob"]
+frequency = 0.0002
+fractal_type = 2
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_jw32o"]
+width = 1920
+height = 1087
+color_ramp = SubResource("Gradient_pbw6q")
+noise = SubResource("FastNoiseLite_v1gob")
 
 [sub_resource type="Gradient" id="Gradient_v1gob"]
 colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
@@ -36,11 +48,10 @@ animations = [{
 script = ExtResource("1_idj7w")
 
 [node name="Watercolor" type="Sprite2D" parent="."]
-modulate = Color(1, 1, 1, 0.796078)
+modulate = Color(1, 1, 1, 0.756863)
 z_index = -4
 position = Vector2(960, 540)
-scale = Vector2(1.33056, 1.10204)
-texture = ExtResource("2_kln2b")
+texture = SubResource("NoiseTexture2D_jw32o")
 
 [node name="Board" type="Node2D" parent="."]
 
@@ -85,7 +96,13 @@ color = Color(0.545098, 0.360784, 0.152941, 1)
 polygon = PackedVector2Array(-84.2727, 48, -85, 64, 81.5455, 64, 80.8182, 48)
 
 [node name="CenterBottom" type="Marker2D" parent="."]
-position = Vector2(990, 966)
+position = Vector2(1014, 934)
+
+[node name="BottomLeft" type="Marker2D" parent="."]
+position = Vector2(72, 950)
+
+[node name="BottomRight" type="Marker2D" parent="."]
+position = Vector2(1848, 950)
 
 [node name="TopLeft" type="Marker2D" parent="."]
 position = Vector2(72, 94)
@@ -103,6 +120,7 @@ script = ExtResource("3_rgh2o")
 [node name="Ink" type="Polygon2D" parent="."]
 z_index = 1
 color = Color(0, 0, 0, 1)
+invert_border = 5892.3
 
 [node name="Canvas" type="Sprite2D" parent="."]
 unique_name_in_owner = true
@@ -111,7 +129,17 @@ centered = false
 script = ExtResource("3_rgh2o")
 
 [node name="Mountains" type="AnimatedSprite2D" parent="."]
+z_index = 2
 position = Vector2(960, 532)
 sprite_frames = SubResource("SpriteFrames_50glp")
 autoplay = "default"
-frame_progress = 0.0637646
+frame_progress = 0.257237
+
+[node name="InkGrowTimer" type="Timer" parent="."]
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="StaticBody2D"]
+polygon = PackedVector2Array(64, 272, 88, 280, 296, 520, 392, 432, 920, 984, 1096, 992, 1416, 608, 1472, 648, 1696, 408, 1736, 424, 1872, 288, 1864, 984, 1120, 1048, 920, 1024, 72, 976)
+
+[connection signal="timeout" from="InkGrowTimer" to="." method="_on_ink_grow_timer_timeout"]

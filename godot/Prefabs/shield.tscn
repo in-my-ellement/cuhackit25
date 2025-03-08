@@ -1,0 +1,29 @@
+[gd_scene load_steps=4 format=3 uid="uid://dyv4kwxl3cs3s"]
+
+[ext_resource type="Script" uid="uid://wjc8yceehue" path="res://Prefabs/shield.gd" id="1_3l4nu"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_d2k38"]
+size = Vector2(128, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3l4nu"]
+size = Vector2(144, 48)
+
+[node name="Shield" type="CharacterBody2D"]
+script = ExtResource("1_3l4nu")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+visible = false
+offset_left = -64.0
+offset_top = -16.0
+offset_right = 64.0
+offset_bottom = 16.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_d2k38")
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("RectangleShape2D_3l4nu")
+
+[connection signal="body_entered" from="Area2D" to="." method="_on_area_2d_body_entered"]

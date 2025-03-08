@@ -1,0 +1,45 @@
+[gd_scene load_steps=4 format=3 uid="uid://crcihv3g8f88v"]
+
+[ext_resource type="Script" uid="uid://bxke83ugv8cv0" path="res://Prefabs/star.gd" id="1_7get0"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_7get0"]
+radius = 18.2857
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hrqmr"]
+radius = 24.0
+
+[node name="Star" type="CharacterBody2D"]
+collision_mask = 0
+script = ExtResource("1_7get0")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_7get0")
+
+[node name="Polygon2D" type="Polygon2D" parent="."]
+color = Color(0.400698, 0.400698, 0.400698, 1)
+polygon = PackedVector2Array(-4.57143, -22.8571, 4.57143, -13.7143, 4.57143, -4.57143, 22.8571, -4.57143, 13.7143, 4.57143, 4.57143, 4.57143, 4.57143, 13.7143, 4.57143, 22.8571, -4.57143, 13.7143, -4.57143, 4.57143, -22.8571, 4.57143, -13.7143, -4.57143, -4.57143, -4.57143)
+
+[node name="Node2D" type="Node2D" parent="."]
+
+[node name="Polygon2D2" type="Polygon2D" parent="Node2D"]
+scale = Vector2(1, 1)
+polygon = PackedVector2Array(-22.8571, 4.57143, -20.5714, 2.28571, -4.57143, 2.28571, -4.57143, 4.57143)
+
+[node name="Polygon2D3" type="Polygon2D" parent="Node2D"]
+scale = Vector2(1, 1)
+polygon = PackedVector2Array(2.28571, 4.57143, 2.28571, 20.5714, 4.57143, 22.8571, 4.57143, 4.57143)
+
+[node name="Polygon2D4" type="Polygon2D" parent="Node2D"]
+scale = Vector2(1, 1)
+polygon = PackedVector2Array(4.57143, -4.57143, 4.57143, -2.28571, 20.5714, -2.28571, 22.8571, -4.57143)
+
+[node name="Polygon2D5" type="Polygon2D" parent="Node2D"]
+scale = Vector2(1, 1)
+polygon = PackedVector2Array(-4.57143, -22.8571, -2.28571, -20.5714, -2.28571, -4.57143, -4.57143, -4.57143)
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("CircleShape2D_hrqmr")
+
+[connection signal="body_entered" from="Area2D" to="." method="_on_area_2d_body_entered"]
