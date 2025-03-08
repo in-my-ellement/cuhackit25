@@ -1,6 +1,6 @@
 // WebSocket connection
 // TODO: fix this
-const ws = new WebSocket('ws://localhost:2025');
+const ws = new WebSocket('ws://198.21.212.1:2025');
 
 // thats that hazel espresso
 let id = undefined;
@@ -205,6 +205,7 @@ ws.addEventListener('open', () => {
 });
 
 ws.addEventListener("message", (event) => {
+    console.log(event.data);
     if (id === undefined) {
         id = JSON.parse(event.data)["id"];
         console.log(id);
