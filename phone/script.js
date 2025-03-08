@@ -5,6 +5,10 @@ const ws = new WebSocket('ws://198.21.212.1:2025');
 // thats that hazel espresso
 let id = undefined;
 
+// MAGNETS??/
+const compass = new Compass();
+let initBearing = undefined;
+
 // DOM elements
 const permissionBtn = document.getElementById('permission-btn');
 const recorder = document.getElementById('recorder');
@@ -78,6 +82,7 @@ function handleMotion(event) {
         x: event.accelerationIncludingGravity.x ? parseFloat(event.accelerationIncludingGravity.x.toFixed(2)) : 0,
         y: event.accelerationIncludingGravity.y ? parseFloat(event.accelerationIncludingGravity.y.toFixed(2)) : 0,
         z: event.accelerationIncludingGravity.z ? parseFloat(event.accelerationIncludingGravity.z.toFixed(2)) : 0,
+        heading: compass.getBearingToNorth(),
         timestamp: Date.now()
     };
     
@@ -145,7 +150,8 @@ function stopRecording(e) {
     ws.send(JSON.stringify({
         type: 'recorded-data',
         data: sampledData,
-        recordingTime: Date.now() - recordingStartTime
+        recordingTime: Date.now() - recordingStartTime,
+        heading: initBearing - compass.getBearingToNorth()
     }));
     
     // Reset status after 2 seconds
@@ -202,6 +208,12 @@ if (typeof DeviceMotionEvent.requestPermission !== 'function') {
 // Handle WebSocket events
 ws.addEventListener('open', () => {
     alert('WebSocket connected');
+    
+    // get init heading
+    compass.init(() => { 
+        bearing = compass.getBearingToNorth(); 
+        console.log(bearing);
+    });
 });
 
 ws.addEventListener("message", (event) => {
