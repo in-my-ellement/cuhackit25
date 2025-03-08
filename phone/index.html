@@ -2,9 +2,124 @@
 <html>
     <head>
         <title>emilyblaster</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                padding: 20px;
+                margin: 0;
+                background-color: #f5f5f5;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: white;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            h1 {
+                text-align: center;
+                color: #333;
+            }
+            .record-btn {
+                display: block;
+                width: 200px;
+                height: 200px;
+                margin: 30px auto;
+                border-radius: 50%;
+                background-color: #e74c3c;
+                color: white;
+                font-size: 18px;
+                font-weight: bold;
+                border: none;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                cursor: pointer;
+                user-select: none;
+                -webkit-user-select: none;
+                transition: transform 0.1s, box-shadow 0.1s;
+            }
+            .record-btn:active {
+                transform: scale(0.95);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                background-color: #c0392b;
+            }
+            .permission-btn {
+                padding: 12px 20px;
+                background-color: #3498db;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                margin: 20px auto;
+                font-size: 16px;
+                display: block;
+            }
+            .current-reading {
+                text-align: center;
+                margin: 20px 0;
+                font-size: 18px;
+            }
+            .status {
+                text-align: center;
+                margin: 10px 0;
+                font-weight: bold;
+                color: #555;
+            }
+            .readings-list {
+                margin-top: 30px;
+                border-top: 1px solid #eee;
+                padding-top: 20px;
+                max-height: 400px;
+                overflow-y: auto;
+            }
+            .readings-list h2 {
+                color: #3498db;
+                text-align: center;
+            }
+            .reading-item {
+                background: #f9f9f9;
+                padding: 10px 15px;
+                margin: 10px 0;
+                border-radius: 5px;
+                border-left: 4px solid #3498db;
+            }
+            .no-readings {
+                text-align: center;
+                color: #999;
+                font-style: italic;
+                padding: 20px;
+            }
+            .hidden {
+                display: none;
+            }
+        </style>
     </head>
     <body>
+        <div class="container">
+            <h1>Accelerometer Recorder</h1>
+            
+            <button id="permission-btn" class="permission-btn">Enable Sensors</button>
+            
+            <div id="recorder" class="hidden">
+                <div class="status" id="status">Hold button to record</div>
+                
+                <button id="record-btn" class="record-btn">HOLD TO RECORD</button>
+                
+                <div class="current-reading">
+                    X: <span id="accel-x">0.00</span> | 
+                    Y: <span id="accel-y">0.00</span> | 
+                    Z: <span id="accel-z">0.00</span>
+                </div>
+                
+                <div class="readings-list">
+                    <h2>Recorded Data</h2>
+                    <div id="readings-container">
+                        <div class="no-readings">No recordings yet</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <script src="./script.js"></script>
-        hazel hazel hazel
     </body>
 </html>
