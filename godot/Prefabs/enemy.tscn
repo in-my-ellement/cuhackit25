@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3 uid="uid://dd8kkm43k6ne3"]
+
+[ext_resource type="Script" uid="uid://bdjgshjtkpqxf" path="res://Prefabs/Enemy.gd" id="1_leowk"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lgw76"]
+size = Vector2(32, 32)
+
+[node name="Enemy" type="CharacterBody2D"]
+collision_mask = 0
+script = ExtResource("1_leowk")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_lgw76")
+
+[node name="Outline" type="Polygon2D" parent="."]
+color = Color(0.637843, 0.637843, 0.637843, 1)
+polygon = PackedVector2Array(-18, -18, 18, -18, 18, 18, -18, 18)
+
+[node name="Polygon2D" type="Polygon2D" parent="."]
+color = Color(0, 0, 0, 1)
+polygon = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)

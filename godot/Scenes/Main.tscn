@@ -1,3 +1,117 @@
-[gd_scene format=3 uid="uid://d3n8jea5li6dj"]
+[gd_scene load_steps=10 format=3 uid="uid://d3n8jea5li6dj"]
+
+[ext_resource type="Script" uid="uid://c6jiq1bt8dlfy" path="res://Scenes/Main.gd" id="1_idj7w"]
+[ext_resource type="Texture2D" uid="uid://cei8e06xio31y" path="res://Assets/watercolor2.jpg" id="2_kln2b"]
+[ext_resource type="Texture2D" uid="uid://dfcvi882per2v" path="res://Assets/mountains.png" id="3_kln2b"]
+[ext_resource type="Script" uid="uid://bko4jmk81oqrq" path="res://Scenes/Canvas.gd" id="3_rgh2o"]
+[ext_resource type="Texture2D" uid="uid://roaq4yfxjqqm" path="res://Assets/mountains6.png" id="5_jw32o"]
+[ext_resource type="Texture2D" uid="uid://b87k72furga4v" path="res://Assets/mountains2_alt.png" id="6_v1gob"]
+
+[sub_resource type="Gradient" id="Gradient_v1gob"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_jw32o"]
+gradient = SubResource("Gradient_v1gob")
+width = 1776
+height = 872
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_50glp"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_jw32o")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_kln2b")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_v1gob")
+}],
+"loop": true,
+"name": &"default",
+"speed": 2.0
+}]
 
 [node name="Main" type="Node2D"]
+script = ExtResource("1_idj7w")
+
+[node name="Watercolor" type="Sprite2D" parent="."]
+modulate = Color(1, 1, 1, 0.796078)
+z_index = -4
+position = Vector2(960, 540)
+scale = Vector2(1.33056, 1.10204)
+texture = ExtResource("2_kln2b")
+
+[node name="Board" type="Node2D" parent="."]
+
+[node name="Polygon2D" type="Polygon2D" parent="Board"]
+z_index = -1
+position = Vector2(112, 0)
+color = Color(0.545098, 0.360784, 0.152941, 1)
+polygon = PackedVector2Array(704, 1000, 768, 1000, 712, 1096, 648, 1096)
+
+[node name="Polygon2D2" type="Polygon2D" parent="Board"]
+z_index = -1
+position = Vector2(1848, 0)
+rotation = 3.14159
+scale = Vector2(1, -1)
+color = Color(0.545098, 0.360784, 0.152941, 1)
+polygon = PackedVector2Array(704, 1000, 768, 1000, 712, 1096, 648, 1096)
+
+[node name="TopBar" type="Polygon2D" parent="Board"]
+z_index = -1
+position = Vector2(974, 48)
+color = Color(0.63, 0.4242, 0.189, 1)
+polygon = PackedVector2Array(-78, -8, -78, 88, 74, 88, 74, -8)
+
+[node name="TopBar2" type="Polygon2D" parent="Board"]
+z_index = -1
+position = Vector2(974, 88)
+color = Color(0.546336, 0.364229, 0.155113, 1)
+polygon = PackedVector2Array(-86, -8, -86, 88, 82, 88, 82, -8)
+
+[node name="TopBar3" type="Polygon2D" parent="Board"]
+z_index = -1
+position = Vector2(983, 920)
+scale = Vector2(11, 1)
+color = Color(0.627451, 0.423529, 0.188235, 1)
+polygon = PackedVector2Array(-84.2727, 48, -86, 88, 82.6364, 88, 80.8182, 48)
+
+[node name="TopBar4" type="Polygon2D" parent="Board"]
+z_index = -1
+position = Vector2(983, 920)
+scale = Vector2(11, 1)
+color = Color(0.545098, 0.360784, 0.152941, 1)
+polygon = PackedVector2Array(-84.2727, 48, -85, 64, 81.5455, 64, 80.8182, 48)
+
+[node name="CenterBottom" type="Marker2D" parent="."]
+position = Vector2(990, 966)
+
+[node name="TopLeft" type="Marker2D" parent="."]
+position = Vector2(72, 94)
+
+[node name="TopRight" type="Marker2D" parent="."]
+position = Vector2(1848, 94)
+
+[node name="CanvasBG" type="Sprite2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(72, 94)
+texture = SubResource("GradientTexture2D_jw32o")
+centered = false
+script = ExtResource("3_rgh2o")
+
+[node name="Ink" type="Polygon2D" parent="."]
+z_index = 1
+color = Color(0, 0, 0, 1)
+
+[node name="Canvas" type="Sprite2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(72, 94)
+centered = false
+script = ExtResource("3_rgh2o")
+
+[node name="Mountains" type="AnimatedSprite2D" parent="."]
+position = Vector2(960, 532)
+sprite_frames = SubResource("SpriteFrames_50glp")
+autoplay = "default"
+frame_progress = 0.0637646
