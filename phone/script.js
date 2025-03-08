@@ -400,6 +400,7 @@ function stopRecording(e) {
     
     // Select 25 evenly distributed points from the processed data
     const sampledData = sampleData(processedData, 25);
+    console.log(sampledData.length);
     
     // Display the data
     displayRecordedData(sampledData, avgHeading);
