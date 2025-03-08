@@ -4,27 +4,194 @@ const ws = new WebSocket('ws://198.21.212.1:2025');
 // ID for the device
 let id = undefined;
 
-// DOM elements
+// Create the app structure first
+document.body.innerHTML = `
+<div id="app-container">
+  <header>
+    <h1>vincent van gesture</h1>
+  </header>
+  
+  <main>
+    <div id="recorder" class="hidden">
+      <div id="status">initializing sensors...</div>
+      
+      <div id="calibration-container">
+        <button id="calibrate-btn" class="btn primary-btn">set forward direction</button>
+      </div>
+      
+      <div id="recording-container" class="hidden">
+        <button id="record-btn" class="btn record-btn">hold to record motion</button>
+      </div>
+      
+      <div id="sensor-data">
+        <div id="heading">heading: <span>N/A</span></div>
+        <div id="accel-data">
+          <div>X: <span id="accel-x">0.00</span>g</div>
+          <div>Y: <span id="accel-y">0.00</span>g</div>
+          <div>Z: <span id="accel-z">0.00</span>g</div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="readings-container">
+      <div class="no-readings">no recordings yet</div>
+    </div>
+  </main>
+</div>
+`;
+
+// Add styles
+const styleElement = document.createElement('style');
+styleElement.textContent = `
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  body {
+    background-color: #f0f0f0;
+    color: #333;
+  }
+  
+  #app-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  h1 {
+    color: #2c3e50;
+  }
+  
+  #recorder {
+    background-color: #2c3e50;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    color: white;
+  }
+  
+  #status {
+    text-align: center;
+    margin-bottom: 15px;
+    font-weight: 500;
+    color: #e0e0e0;
+  }
+  
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+  }
+  
+  .primary-btn {
+    background-color: #b3d4fc; /* Pale blue */
+    color: #2c3e50;
+  }
+  
+  .primary-btn:hover {
+    background-color: #a0c4f0;
+  }
+  
+  .record-btn {
+    background-color: #4169e1; /* Royal blue */
+    color: white;
+  }
+  
+  .record-btn:hover {
+    background-color: #3158d3;
+  }
+  
+  .record-btn:active {
+    background-color: #3a2e78; /* Purple when recording */
+  }
+  
+  #sensor-data {
+    margin-top: 20px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+  }
+  
+  #heading, #accel-data {
+    margin: 10px 0;
+  }
+  
+  #accel-data {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  #accel-data div {
+    flex: 1;
+    text-align: center;
+    padding: 5px;
+  }
+  
+  .hidden {
+    display: none !important;
+  }
+  
+  #readings-container {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .heading-info {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 18px;
+    color: #2c3e50;
+  }
+  
+  .reading-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .reading-item:last-child {
+    border-bottom: none;
+  }
+  
+  .no-readings {
+    text-align: center;
+    color: #888;
+    padding: 20px;
+  }
+`;
+document.head.appendChild(styleElement);
+
+// DOM elements (after they've been created in the HTML)
 const recorder = document.getElementById('recorder');
 const recordBtn = document.getElementById('record-btn');
-const calibrateBtn = document.createElement('button'); // New button for calibration
+const calibrateBtn = document.getElementById('calibrate-btn');
 const accelX = document.getElementById('accel-x');
 const accelY = document.getElementById('accel-y');
 const accelZ = document.getElementById('accel-z');
-const headingEl = document.createElement('div'); // New element for heading
+const headingEl = document.getElementById('heading');
 const statusEl = document.getElementById('status');
 const readingsContainer = document.getElementById('readings-container');
-
-// Add calibrate button to the page
-calibrateBtn.id = 'calibrate-btn';
-calibrateBtn.textContent = 'Set Forward Direction';
-calibrateBtn.className = 'btn';
-recorder.insertBefore(calibrateBtn, recordBtn);
-
-// Add heading element
-headingEl.id = 'heading';
-headingEl.innerHTML = 'Heading: <span>N/A</span>';
-recorder.insertBefore(headingEl, document.getElementById('accel-data'));
+const calibrationContainer = document.getElementById('calibration-container');
+const recordingContainer = document.getElementById('recording-container');
 
 // State variables
 let isRecording = false;
@@ -54,15 +221,20 @@ function initSensors() {
     if (window.DeviceMotionEvent) {
         window.addEventListener("devicemotion", handleMotion, false);
     } else {
-        statusEl.textContent = "Accelerometer not supported on this device";
-        statusEl.style.color = "red";
+        statusEl.textContent = "accelerometer not supported on this device";
+        statusEl.style.color = "#ff7675";
     }
     
     if (window.DeviceOrientationEvent) {
         window.addEventListener("deviceorientation", handleOrientation, false);
     } else {
-        statusEl.textContent = "Magnetometer not supported on this device";
-        statusEl.style.color = "red";
+        statusEl.textContent = "magnetometer not supported on this device";
+        statusEl.style.color = "#ff7675";
+    }
+    
+    // Set initial status
+    if (window.DeviceMotionEvent && window.DeviceOrientationEvent) {
+        statusEl.textContent = "set the forward direction to begin";
     }
 }
 
@@ -104,15 +276,25 @@ function handleOrientation(event) {
 function setForwardDirection() {
     forwardHeading = currentHeading;
     statusEl.textContent = `Forward direction set to ${forwardHeading.toFixed(1)}°`;
-    statusEl.style.color = "green";
-    calibrateBtn.textContent = `Forward: ${forwardHeading.toFixed(1)}°`;
+    statusEl.style.color = "#2ecc71";
     
-    // Enable the record button
-    recordBtn.disabled = false;
+    // Hide calibration button and show recording button
+    calibrationContainer.classList.add('hidden');
+    recordingContainer.classList.remove('hidden');
+    
+    // Set a badge with forward direction
+    const directionBadge = document.createElement('div');
+    directionBadge.style.backgroundColor = 'rgba(255,255,255,0.1)';
+    directionBadge.style.padding = '8px 12px';
+    directionBadge.style.borderRadius = '4px';
+    directionBadge.style.marginTop = '10px';
+    directionBadge.style.textAlign = 'center';
+    directionBadge.innerHTML = `<span>Forward: ${forwardHeading.toFixed(1)}°</span>`;
+    recordingContainer.appendChild(directionBadge);
     
     setTimeout(() => {
-        statusEl.textContent = "Ready to record";
-        statusEl.style.color = "#555";
+        statusEl.textContent = "hold button to record motion";
+        statusEl.style.color = "#e0e0e0";
     }, 2000);
 }
 
@@ -121,12 +303,12 @@ function startRecording(e) {
     e.preventDefault(); // Prevent default behavior
     
     if (!window.DeviceMotionEvent) {
-        alert("Accelerometer not supported on this device");
+        alert("accelerometer not supported on this device");
         return;
     }
     
     if (forwardHeading === null) {
-        alert("Please set forward direction first");
+        alert("please set forward direction first");
         return;
     }
     
@@ -137,8 +319,9 @@ function startRecording(e) {
     recordingStartTime = Date.now();
     
     // Update UI
-    statusEl.textContent = "Recording... release to stop";
-    statusEl.style.color = "#e74c3c";
+    recordBtn.style.backgroundColor = "#3a2e78";
+    statusEl.textContent = "recording... release to stop";
+    statusEl.style.color = "#ff7675";
     
     // Record initial point immediately
     recordPoint();
@@ -201,8 +384,9 @@ function stopRecording(e) {
     isRecording = false;
     
     // Update UI
-    statusEl.textContent = "Recording complete";
-    statusEl.style.color = "green";
+    recordBtn.style.backgroundColor = "#4169e1";
+    statusEl.textContent = "recording complete";
+    statusEl.style.color = "#2ecc71";
     
     // Calculate average heading relative to forward direction
     const avgHeading = calculateAverageHeading(headingValues);
@@ -230,8 +414,8 @@ function stopRecording(e) {
     
     // Reset status after 2 seconds
     setTimeout(() => {
-        statusEl.textContent = "Hold button to record";
-        statusEl.style.color = "#555";
+        statusEl.textContent = "hold button to record motion";
+        statusEl.style.color = "#e0e0e0";
     }, 2000);
 }
 
@@ -263,8 +447,32 @@ function displayRecordedData(data, avgHeading) {
     // Add heading information
     const headingInfo = document.createElement('div');
     headingInfo.className = 'heading-info';
-    headingInfo.innerHTML = `<strong>Average Direction:</strong> ${avgHeading.toFixed(1)}° ${avgHeading > 0 ? 'right' : 'left'} of forward`;
+    
+    // Create a directional indicator
+    const direction = avgHeading > 0 ? 'right' : 'left';
+    const arrowChar = avgHeading > 0 ? '→' : '←';
+    const absHeading = Math.abs(avgHeading);
+    
+    headingInfo.innerHTML = `
+        <strong>Average Direction:</strong> 
+        <div style="font-size: 1.2em; margin-top: 8px;">
+            ${absHeading.toFixed(1)}° ${direction} of forward ${arrowChar}
+        </div>
+    `;
     readingsContainer.appendChild(headingInfo);
+    
+    // Add a separator
+    const separator = document.createElement('div');
+    separator.style.margin = '15px 0';
+    separator.style.borderBottom = '1px solid #eee';
+    readingsContainer.appendChild(separator);
+    
+    // Add data points title
+    const dataTitle = document.createElement('div');
+    dataTitle.style.fontWeight = 'bold';
+    dataTitle.style.margin = '10px 0';
+    dataTitle.textContent = 'Recorded Data Points';
+    readingsContainer.appendChild(dataTitle);
     
     // Create elements for each data point
     data.forEach((point, index) => {
@@ -282,9 +490,6 @@ function displayRecordedData(data, avgHeading) {
 // Handle WebSocket events
 ws.addEventListener('open', () => {
     console.log('WebSocket connected');
-    
-    // Disable record button until forward direction is set
-    recordBtn.disabled = true;
 });
 
 ws.addEventListener("message", (event) => {
@@ -296,9 +501,13 @@ ws.addEventListener("message", (event) => {
 });
 
 ws.addEventListener('error', (error) => {
-    console.error('WebSocket error:', error);
+    console.error('websocket error:', error);
+    statusEl.textContent = "websocket error - check console";
+    statusEl.style.color = "#ff7675";
 });
 
 ws.addEventListener('close', () => {
     console.log('WebSocket disconnected');
+    statusEl.textContent = "websocket disconnected";
+    statusEl.style.color = "#ff7675";
 });
