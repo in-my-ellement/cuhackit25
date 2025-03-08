@@ -93,6 +93,7 @@ wss.on('connection', function connection(ws) {
     ws.on('message', function message(data) {
         // parse the json points
         const points = JSON.parse(data.toString())["data"];
+        console.log(JSON.parse(data.toString())["heading"]);
         console.log(points); 
         var states = new Array();
 
