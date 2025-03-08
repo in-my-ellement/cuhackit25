@@ -13,9 +13,18 @@ function formatPoints(points) {
 
 
 // WEBSOCKETS SERVER
+let num = 0;
 const wss = new WebSocketServer({ port: 2025 });
 wss.on('connection', function connection(ws) {
-    console.log(`WS CONNECTION!! ${ws.url}`)
+    console.log(`CONNECTION ${num}`);
+    ws.send(JSON.stringify({ id: num }), { binary: false }); // send the user the number back
+
+    // dont allow 5
+    if (num > 4) {
+        ws.close(); console.log("rejected for max"); return;
+    } else {
+        num++;
+    }
 
     // start a recognizer class for each individual connected user
     const rec = new DollarRecognizer();
