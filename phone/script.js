@@ -1,6 +1,9 @@
 // WebSocket connection
 // TODO: fix this
-const ws = new WebSocket('ws://198.21.212.1:2025');
+const ws = new WebSocket('ws://localhost:2025');
+
+// thats that hazel espresso
+let id = undefined;
 
 // DOM elements
 const permissionBtn = document.getElementById('permission-btn');
@@ -199,6 +202,13 @@ if (typeof DeviceMotionEvent.requestPermission !== 'function') {
 // Handle WebSocket events
 ws.addEventListener('open', () => {
     alert('WebSocket connected');
+});
+
+ws.addEventListener("message", (event) => {
+    if (id === undefined) {
+        id = JSON.parse(event.data)["id"];
+        console.log(id);
+    }
 });
 
 ws.addEventListener('error', (error) => {
