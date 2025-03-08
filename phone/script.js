@@ -1,68 +1,54 @@
 // WebSocket connection
-// TODO: fix this
 const ws = new WebSocket('ws://198.21.212.1:2025');
 
-// thats that hazel espresso
+// ID for the device
 let id = undefined;
 
-// MAGNETS??/
-const compass = new Compass();
-let initBearing = undefined;
-
 // DOM elements
-const permissionBtn = document.getElementById('permission-btn');
 const recorder = document.getElementById('recorder');
 const recordBtn = document.getElementById('record-btn');
+const calibrateBtn = document.createElement('button'); // New button for calibration
 const accelX = document.getElementById('accel-x');
 const accelY = document.getElementById('accel-y');
 const accelZ = document.getElementById('accel-z');
+const headingEl = document.createElement('div'); // New element for heading
 const statusEl = document.getElementById('status');
 const readingsContainer = document.getElementById('readings-container');
+
+// Add calibrate button to the page
+calibrateBtn.id = 'calibrate-btn';
+calibrateBtn.textContent = 'Set Forward Direction';
+calibrateBtn.className = 'btn';
+recorder.insertBefore(calibrateBtn, recordBtn);
+
+// Add heading element
+headingEl.id = 'heading';
+headingEl.innerHTML = 'Heading: <span>N/A</span>';
+recorder.insertBefore(headingEl, document.getElementById('accel-data'));
 
 // State variables
 let isRecording = false;
 let recordedData = [];
 let currentAccel = { x: 0, y: 0, z: 0 };
+let currentHeading = 0;
+let forwardHeading = null;
 let recordingInterval = null;
 let recordingStartTime = 0;
+let headingValues = [];
 
 // Event listeners
-permissionBtn.addEventListener('click', requestPermissions);
 recordBtn.addEventListener('mousedown', startRecording);
 recordBtn.addEventListener('touchstart', startRecording);
 recordBtn.addEventListener('mouseup', stopRecording);
 recordBtn.addEventListener('touchend', stopRecording);
 recordBtn.addEventListener('mouseleave', stopRecording);
+calibrateBtn.addEventListener('click', setForwardDirection);
 
-// Request permissions for device sensors
-function requestPermissions() {
-    if (typeof DeviceMotionEvent.requestPermission === 'function') {
-        DeviceMotionEvent.requestPermission()
-            .then(permissionState => {
-                if (permissionState === 'granted') {
-                    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                        DeviceOrientationEvent.requestPermission()
-                            .then(orientPermission => {
-                                if (orientPermission === 'granted') {
-                                    initSensors();
-                                }
-                            })
-                            .catch(console.error);
-                    } else {
-                        initSensors();
-                    }
-                }
-            })
-            .catch(console.error);
-    } else {
-        // No permission needed (Android, older iOS)
-        initSensors();
-    }
-}
+// Initialize sensors immediately
+initSensors();
 
-// Initialize sensors after permissions
+// Initialize sensors
 function initSensors() {
-    permissionBtn.style.display = 'none';
     recorder.classList.remove('hidden');
     
     if (window.DeviceMotionEvent) {
@@ -71,9 +57,16 @@ function initSensors() {
         statusEl.textContent = "Accelerometer not supported on this device";
         statusEl.style.color = "red";
     }
+    
+    if (window.DeviceOrientationEvent) {
+        window.addEventListener("deviceorientation", handleOrientation, false);
+    } else {
+        statusEl.textContent = "Magnetometer not supported on this device";
+        statusEl.style.color = "red";
+    }
 }
 
-// Handle motion data
+// Handle motion data (accelerometer)
 function handleMotion(event) {
     if (!event.accelerationIncludingGravity) return;
     
@@ -82,7 +75,6 @@ function handleMotion(event) {
         x: event.accelerationIncludingGravity.x ? parseFloat(event.accelerationIncludingGravity.x.toFixed(2)) : 0,
         y: event.accelerationIncludingGravity.y ? parseFloat(event.accelerationIncludingGravity.y.toFixed(2)) : 0,
         z: event.accelerationIncludingGravity.z ? parseFloat(event.accelerationIncludingGravity.z.toFixed(2)) : 0,
-        heading: compass.getBearingToNorth(),
         timestamp: Date.now()
     };
     
@@ -90,6 +82,38 @@ function handleMotion(event) {
     accelX.textContent = currentAccel.x.toFixed(2);
     accelY.textContent = currentAccel.y.toFixed(2);
     accelZ.textContent = currentAccel.z.toFixed(2);
+}
+
+// Handle orientation data (magnetometer)
+function handleOrientation(event) {
+    // Get heading (alpha is the compass direction)
+    if (event.alpha !== null) {
+        currentHeading = event.alpha;
+        
+        // Update heading display
+        headingEl.querySelector('span').textContent = `${currentHeading.toFixed(1)}°`;
+        
+        // If recording, store heading values
+        if (isRecording) {
+            headingValues.push(currentHeading);
+        }
+    }
+}
+
+// Set the forward direction
+function setForwardDirection() {
+    forwardHeading = currentHeading;
+    statusEl.textContent = `Forward direction set to ${forwardHeading.toFixed(1)}°`;
+    statusEl.style.color = "green";
+    calibrateBtn.textContent = `Forward: ${forwardHeading.toFixed(1)}°`;
+    
+    // Enable the record button
+    recordBtn.disabled = false;
+    
+    setTimeout(() => {
+        statusEl.textContent = "Ready to record";
+        statusEl.style.color = "#555";
+    }, 2000);
 }
 
 // Start recording when button is pressed
@@ -101,8 +125,14 @@ function startRecording(e) {
         return;
     }
     
+    if (forwardHeading === null) {
+        alert("Please set forward direction first");
+        return;
+    }
+    
     // Clear previous data
     recordedData = [];
+    headingValues = [];
     isRecording = true;
     recordingStartTime = Date.now();
     
@@ -123,10 +153,44 @@ function startRecording(e) {
 function recordPoint() {
     if (isRecording) {
         recordedData.push({
-            ...currentAccel,
+            x: currentAccel.x,
+            y: currentAccel.y,
+            z: currentAccel.z,
+            heading: currentHeading,
             elapsedTime: Date.now() - recordingStartTime
         });
     }
+}
+
+// Calculate heading relative to forward direction
+function calculateRelativeHeading(heading) {
+    let relative = heading - forwardHeading;
+    // Normalize to -180 to 180 degrees
+    if (relative > 180) relative -= 360;
+    if (relative < -180) relative += 360;
+    return relative;
+}
+
+// Calculate average heading
+function calculateAverageHeading(headings) {
+    // Convert to relative headings
+    const relativeHeadings = headings.map(h => calculateRelativeHeading(h));
+    
+    // Calculate average using circular mean
+    let sumSin = 0;
+    let sumCos = 0;
+    
+    relativeHeadings.forEach(angle => {
+        // Convert to radians
+        const radians = angle * (Math.PI / 180);
+        sumSin += Math.sin(radians);
+        sumCos += Math.cos(radians);
+    });
+    
+    const avgRadians = Math.atan2(sumSin / relativeHeadings.length, sumCos / relativeHeadings.length);
+    const avgDegrees = avgRadians * (180 / Math.PI);
+    
+    return avgDegrees;
 }
 
 // Stop recording when button is released
@@ -140,18 +204,28 @@ function stopRecording(e) {
     statusEl.textContent = "Recording complete";
     statusEl.style.color = "green";
     
-    // Select 25 evenly distributed points from the recorded data
-    const sampledData = sampleData(recordedData, 25);
+    // Calculate average heading relative to forward direction
+    const avgHeading = calculateAverageHeading(headingValues);
+    
+    // Process accelerometer data for sending (only x and y as requested)
+    const processedData = recordedData.map(point => ({
+        x: point.x,
+        y: point.y,
+        elapsedTime: point.elapsedTime
+    }));
+    
+    // Select 25 evenly distributed points from the processed data
+    const sampledData = sampleData(processedData, 25);
     
     // Display the data
-    displayRecordedData(sampledData);
+    displayRecordedData(sampledData, avgHeading);
     
     // Send to WebSocket
     ws.send(JSON.stringify({
         type: 'recorded-data',
         data: sampledData,
         recordingTime: Date.now() - recordingStartTime,
-        heading: initBearing - compass.getBearingToNorth()
+        heading: avgHeading
     }));
     
     // Reset status after 2 seconds
@@ -177,7 +251,7 @@ function sampleData(data, sampleCount) {
 }
 
 // Display the recorded data on the page
-function displayRecordedData(data) {
+function displayRecordedData(data, avgHeading) {
     // Clear the container
     readingsContainer.innerHTML = '';
     
@@ -186,6 +260,12 @@ function displayRecordedData(data) {
         return;
     }
     
+    // Add heading information
+    const headingInfo = document.createElement('div');
+    headingInfo.className = 'heading-info';
+    headingInfo.innerHTML = `<strong>Average Direction:</strong> ${avgHeading.toFixed(1)}° ${avgHeading > 0 ? 'right' : 'left'} of forward`;
+    readingsContainer.appendChild(headingInfo);
+    
     // Create elements for each data point
     data.forEach((point, index) => {
         const item = document.createElement('div');
@@ -193,27 +273,18 @@ function displayRecordedData(data) {
         item.innerHTML = `
             <strong>Point ${index + 1}</strong> (${point.elapsedTime}ms): 
             X: ${point.x.toFixed(2)}, 
-            Y: ${point.y.toFixed(2)}, 
-            Z: ${point.z.toFixed(2)}
+            Y: ${point.y.toFixed(2)}
         `;
         readingsContainer.appendChild(item);
     });
 }
 
-// Only initialize automatically if we don't need permissions
-if (typeof DeviceMotionEvent.requestPermission !== 'function') {
-    initSensors();
-}
-
 // Handle WebSocket events
 ws.addEventListener('open', () => {
-    alert('WebSocket connected');
+    console.log('WebSocket connected');
     
-    // get init heading
-    compass.init(() => { 
-        bearing = compass.getBearingToNorth(); 
-        console.log(bearing);
-    });
+    // Disable record button until forward direction is set
+    recordBtn.disabled = true;
 });
 
 ws.addEventListener("message", (event) => {
@@ -225,9 +296,9 @@ ws.addEventListener("message", (event) => {
 });
 
 ws.addEventListener('error', (error) => {
-    alert('WebSocket error:', error);
+    console.error('WebSocket error:', error);
 });
 
 ws.addEventListener('close', () => {
-    alert('WebSocket disconnected');
+    console.log('WebSocket disconnected');
 });
