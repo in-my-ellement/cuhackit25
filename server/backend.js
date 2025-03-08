@@ -6,11 +6,12 @@ import serveStatic from "serve-static";
 import finalhandler from "finalhandler";
 import http from "http";
 
+import ShapeDetector from "shape-detector";
+
 // for generating new gestures
 function formatPoints(points) {
     return points.map(point => `new Point(${point.x}, ${point.y})`).join(',');
 }
-
 
 // WEBSOCKETS SERVER
 let num = 0;
@@ -27,7 +28,7 @@ wss.on('connection', function connection(ws) {
     }
 
     // start a recognizer class for each individual connected user
-    const rec = new DollarRecognizer();
+    const rec = new ShapeDetector(ShapeDetector.defaultShapes);
 
     // callback for error
     ws.on('error', console.error);
@@ -43,16 +44,12 @@ wss.on('connection', function connection(ws) {
         for (let i = 0; i < points.length; i++) {
             points[i]["x"] *= points[i]["x"];
             points[i]["y"] *= points[i]["y"];
-            var point = new Point(points[i]["x"], points[i]["y"]);
+            var point = { x: points[i]["x"], y: points[i]["y"] };
             states.push(point);
         }
 
-        // generate data
-        let gaming = formatPoints(points);
-        console.log(gaming);
-
         // recognize a gesture with the points
-        let gesture = rec.Recognize(states, true);
+        let gesture = rec.spot(states);
         console.log(gesture);
 
         // data to send out to clients
