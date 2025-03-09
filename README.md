@@ -1,5 +1,5 @@
-# CUhackit 2025 Project
+# vincent van gesture
 
 hazel torek, jacob davis, toby cox, ryon peddapalli
 
-a homage to emilyblaster
+an homage to emilyblaster
